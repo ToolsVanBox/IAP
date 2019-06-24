@@ -28,12 +28,89 @@ sub runStructuralVariantCallers {
 	my $delly_jobs = runDelly(\%opt);
 	push(@sv_jobs, @{$delly_jobs});
     }
-    
+
     if($opt{SV_MANTA} eq "yes"){
 	my $manta_jobs = runManta(\%opt);
 	push(@sv_jobs, @{$manta_jobs});
     }
+    if($opt{SV_GRIDSS} eq "yes"){
+      my $gridss_jobs = runGridss(\%opt);
+      push(@sv_jobs, @{$gridss_jobs})
+    }
     return(\@sv_jobs);
+}
+
+sub runGridss {
+  ###
+  # Run structural variant caller GRIDSS
+  ###
+  my $configuration = shift;
+  my %opt = %{$configuration};
+  my @gridss_jobs;
+  my @sampleBams;
+  my %somatic_samples = %{$opt{SOMATIC_SAMPLES}};
+  my @single_samples = @{$opt{SINGLE_SAMPLES}};
+
+  my $gridss_out_dir = "$opt{OUTPUT_DIR}/structuralVariants/gridss/";
+  my $gridss_log_dir = "$gridss_out_dir/logs/";
+  my $gridds_job_dir = "$gridss_out_dir/jobs/";
+  my $gridss_tmp_dir = "$gridss_out_dir/tmp/";
+
+  if(! -e $gridss_out_dir){make_path($gridss_out_dir) or die "Couldn't create directory: $gridss_out_dir\n"}
+  if(! -e $gridss_log_dir){make_path($gridss_log_dir) or die "Couldn't create directory: $gridss_log_dir\n"}
+  if(! -e $gridss_job_dir){make_path($gridss_job_dir) or die "Couldn't create directory: $gridss_job_dir\n"}
+  if(! -e $gridss_tmp_dir){make_path($gridss_tmp_dir) or die "Couldn't create directory: $gridss_tmp_dir\n"}
+
+  if (-e "$opt{OUTPUT_DIR}/logs/SV_GRIDSS.done"){
+    print "WARNING: $opt{OUTPUT_DIR}/logs/SV_GRIDSS.done exists, skipping \n";
+    return \%opt;
+  }
+
+  ### Run multisample calling
+  foreach my $sample (@single_samples) {
+    my $sampleBam = "$opt{OUTPUT_DIR}/$sample/mapping/$opt{BAM_FILES}->{$sample}"
+    push( @sampleBams, $sampleBam);
+    ## Running jobs
+    if ( @{$opt{RUNNING_JOBS}->{$sample}} ){
+        push( @runningJobs, @{$opt{RUNNING_JOBS}->{$sample}} );
+    }
+  }
+
+  my $vcfFile = "$gridss_out_dir/gridss.vcf";
+  my $assemblyBam = "$gridss_out_dir/gridss.assembly.bam"
+
+  # Setup gridss commands
+  my $check_bwa = "if ! which bwa >/dev/null 2>&1; then echo \"Missing bwa. Please add to PATH\" exit 1; fi";
+
+  # Create manta bash script
+  my $job_id = "SV_GRIDSS\_".get_job_id();
+  my $bashFile = $gridss_job_dir.$job_id.".sh";
+
+  open GRIDSS_SH, ">$bashFile" or die "cannot open file $bashFile \n";
+  print GRIDSS_SH "#!/bin/bash\n\n";
+  print GRIDSS_SH "bash $opt{CLUSTER_PATH}/settings.sh\n\n";
+  print GRIDSS_SH "cd $opt{OUTPUT_DIR}\n\n";
+
+  print GRIDSS_SH "guixr load-profile $opt{HMFTOOLS_PROFILE} -- << EOF\n";
+  print GRIDSS_SH "$check_bwa\n";
+  print GRIDSS_SH "\tjava -ea Xmx$opt{GRIDSS_MEM}G \\\ \n";
+  print GRIDSS_SH "\t\t-Dsamjdk.create_index=true \\\ \n";
+  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_read_samtools=true \\\ \n";
+  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_write_samtools=true \\\ \n";
+  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_write_tribble=true \\\ \n";
+  print GRIDSS_SH "\t\t-Dsamjdk.compression_level=1 \\\ \n";
+  print GRIDSS_SH "\t\t-Dgridss.gridss.output_to_temp_file=true \\\ \n";
+  print GRIDSS_SH "\t\t-cp $opt{GRIDSS_PATH}/gridss.jar gridss.CallVariants \\\ \n";
+  print GRIDSS_SH "\t\tTMP_DIR=$gridss_tmp_dir \\\ \n";
+  print GRIDSS_SH "\t\tWORKING_DIR=$gridss_out_dir \\\ \n";
+  print GRIDSS_SH "\t\tTHREADS=$opt{GRIDSS_THREADS} \\\ \n";
+  print GRIDSS_SH "\t\tREFERENCE_SEQUENCE=$opt{GENOME} \\\ \n";
+  print GRIDSS_SH "\t\tOUTPUT=$vcfFile \\\ \n";
+  print GRIDSS_SH "\t\tASSEMBLY=$assemblyBam \\\ \n";
+  foreach my $sampleBam ($sampleBams) {
+    print GRIDSS_SH "\t\tINPUT=$sampleBam \\\ \n";
+  }
+  print GRIDSS_SH "EOF\n\n";
 }
 
 sub runManta {
@@ -45,7 +122,7 @@ sub runManta {
     my @manta_jobs;
     my %somatic_samples = %{$opt{SOMATIC_SAMPLES}};
     my @single_samples = @{$opt{SINGLE_SAMPLES}};
-    
+
     ### Run single samples
     foreach my $sample (@single_samples){
 	# Setup output, log and job directories.
@@ -56,7 +133,7 @@ sub runManta {
 	if(! -e $manta_out_dir){make_path($manta_out_dir) or die "Couldn't create directory: $manta_out_dir\n"}
 	if(! -e $manta_log_dir){make_path($manta_log_dir) or die "Couldn't create directory: $manta_log_dir\n"}
 	if(! -e $manta_job_dir){make_path($manta_job_dir) or die "Couldn't create directory: $manta_job_dir\n"}
-	
+
 	# Skip Manta if .done file exists
 	if (-e "$manta_log_dir/SV_MANTA_$sample.done"){
 	    print "WARNING: $manta_log_dir/SV_MMANTA_$sample.done exists, skipping \n";
@@ -69,11 +146,11 @@ sub runManta {
 	    my $sample_bam = "$opt{OUTPUT_DIR}/$sample/mapping/$opt{BAM_FILES}->{$sample}";
 	    my $config_manta = "$opt{MANTA_PATH}/configManta.py --referenceFasta $opt{GENOME} --runDir $manta_out_dir --bam $sample_bam ";
 	    my $run_manta = "$manta_out_dir/runWorkflow.py -m local -j $opt{MANTA_THREADS} ";
-	    
+
 	    # Create manta bash script
 	    my $job_id = "SV_MANTA_$sample\_".get_job_id();
 	    my $bashFile = $manta_job_dir.$job_id.".sh";
-    
+
 	    open MANTA_SH, ">$bashFile" or die "cannot open file $bashFile \n";
 	    print MANTA_SH "#!/bin/bash\n\n";
 	    print MANTA_SH "bash $opt{CLUSTER_PATH}/settings.sh\n\n";
@@ -86,7 +163,7 @@ sub runManta {
 	    print MANTA_SH "then\n";
 	    print MANTA_SH "\ttouch $manta_log_dir/SV_MANTA_$sample.done\n";
 	    print MANTA_SH "fi\n";
-    
+
 	    my $qsub = &qsubTemplate(\%opt,"MANTA");
 	    if (@running_jobs){
 		system "$qsub -o $manta_log_dir/$job_id.out -e $manta_log_dir/$job_id.err -N $job_id -hold_jid ".join(",",@running_jobs)." $bashFile";
@@ -96,7 +173,7 @@ sub runManta {
 	    push(@manta_jobs, $job_id);
 	}
     }
-    
+
     ### Run somatic samples
     foreach my $sample (keys %somatic_samples){
 	foreach my $sample_tumor (@{$somatic_samples{$sample}{'tumor'}}){
@@ -110,7 +187,7 @@ sub runManta {
 		if(! -e $manta_out_dir){make_path($manta_out_dir) or die "Couldn't create directory: $manta_out_dir\n"}
 		if(! -e $manta_log_dir){make_path($manta_log_dir) or die "Couldn't create directory: $manta_log_dir\n"}
 		if(! -e $manta_job_dir){make_path($manta_job_dir) or die "Couldn't create directory: $manta_job_dir\n"}
-		
+
 		# Skip Manta if .done file exists
 		if (-e "$manta_log_dir/SV_MANTA_$sample_tumor_name.done"){
 		    print "WARNING: $manta_log_dir/SV_MANTA_$sample_tumor_name.done exists, skipping \n";
@@ -119,13 +196,13 @@ sub runManta {
 		    my @running_jobs;
 		    if (@{$opt{RUNNING_JOBS}->{$sample_tumor}}){ push(@running_jobs, @{$opt{RUNNING_JOBS}->{$sample_tumor}}) }
 		    if (@{$opt{RUNNING_JOBS}->{$sample_ref}}){ push(@running_jobs, @{$opt{RUNNING_JOBS}->{$sample_ref}}) }
-		
+
 		    # Setup manta commands
 		    my $ref_bam = "$opt{OUTPUT_DIR}/$sample_ref/mapping/$opt{BAM_FILES}->{$sample_ref}";
 		    my $tumor_bam = "$opt{OUTPUT_DIR}/$sample_tumor/mapping/$opt{BAM_FILES}->{$sample_tumor}";
 		    my $config_manta = "$opt{MANTA_PATH}/configManta.py --referenceFasta $opt{GENOME} --runDir $manta_out_dir --normalBam $ref_bam --tumorBam $tumor_bam --generateEvidenceBam";
 		    my $run_manta = "$manta_out_dir/runWorkflow.py -m local -j $opt{MANTA_THREADS} ";
-		
+
 		    # Create manta bash script
 		    my $job_id = "SV_MANTA_$sample_tumor_name\_".get_job_id();
 		    my $bashFile = $manta_job_dir.$job_id.".sh";
@@ -147,7 +224,7 @@ sub runManta {
 		    print MANTA_SH "then\n";
 		    print MANTA_SH "\ttouch $manta_log_dir/SV_MANTA_$sample_tumor_name.done\n";
 		    print MANTA_SH "fi\n";
-    
+
 		    my $qsub = &qsubJava(\%opt,"MANTA");
 		    if (@running_jobs){
 			system "$qsub -o $manta_log_dir/$job_id.out -e $manta_log_dir/$job_id.err -N $job_id -hold_jid ".join(",",@running_jobs)." $bashFile";
@@ -268,7 +345,7 @@ sub runDelly {
 		close CONVERT;
 		system "$qsub -o $delly_log_dir/$type\_CONVERT.out -e $delly_log_dir/$type\_CONVERT.err -N $jobID -hold_jid ".join(",",@$jobIDs_chunks). " $convert_file";
 		push @$jobIDs_chunks, $jobID;
-		
+
 		my $jobID2 = "VCF_CONCAT_".get_job_id();
 	        my $vcf_concat_file = "$delly_job_dir/$type\_".$jobID2.".sh";
 		open VCF_CONCAT, ">$vcf_concat_file";
@@ -284,7 +361,7 @@ sub runDelly {
 		print VCF_CONCAT "\tfi\n";
 		print VCF_CONCAT "fi\n\n";
 		close VCF_CONCAT;
-		
+
 		system "$qsub -o $delly_log_dir/$type\_VCF_CONCAT.out -e $delly_log_dir/$type\_VCF_CONCAT.err -N $jobID2 -hold_jid ".join(",",@$jobIDs_chunks). " $vcf_concat_file";
 
 		push @jobIDs_concat, $jobID2;
@@ -368,7 +445,7 @@ sub runDelly {
 		    close VCF_CONCAT;
 
 		    system "$qsub -o $delly_log_dir/$type\_VCF_CONCAT.out -e $delly_log_dir/$type\_VCF_CONCAT.err -N $jobID3 -hold_jid $jobID2 $vcf_concat_file";
-		
+
 		    push @jobIDs_concat, $jobID3;
 	    # Other sv types
 	    } else {
@@ -388,7 +465,7 @@ sub runDelly {
 		print VCF_CONCAT "fi\n\n";
 		close VCF_CONCAT;
 		system "$qsub -o $delly_log_dir/$type\_VCF_CONCAT.out -e $delly_log_dir/$type\_VCF_CONCAT.err -N $jobID2 -hold_jid $jobID $vcf_concat_file";
-		
+
 		push @jobIDs_concat, $jobID2;
 	    }
 	}
@@ -489,7 +566,7 @@ sub create_intrachromosomal_chunks {
 	    print EXC $chrom . "\n" unless $chrom =~ /^$chr$/;
 	}
 	close EXC;
-	
+
 	my $jobID = "DELLY_".get_job_id();
 	my $dellyFile = "$delly_job_dir/$type\_$chr\_".$jobID.".sh";
 	push @jobIDs, $jobID;

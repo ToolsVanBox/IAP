@@ -148,7 +148,7 @@ if(! $opt{VCF} ){
 	$opt_ref = IAP::baseRecal::runBaseRecalibration(\%opt);
 	%opt = %$opt_ref;
     }
-    
+
     if($opt{NIPT} eq "yes"){
 	print "\n###SCHEDULING NIPT###\n";
 	my $niptJob = IAP::nipt::runNipt(\%opt);
@@ -209,7 +209,7 @@ if(! $opt{VCF} ){
 if($opt{FILTER_VARIANTS} eq "yes"){
     print "\n###SCHEDULING VARIANT FILTRATION####\n";
     my $FVJob = IAP::filterVariants::runFilterVariants(\%opt);
-    
+
     foreach my $sample (@{$opt{SAMPLES}}){
 	push (@{$opt{RUNNING_JOBS}->{$sample}} , $FVJob);
     }
@@ -219,7 +219,7 @@ if($opt{FILTER_VARIANTS} eq "yes"){
 if($opt{ANNOTATE_VARIANTS} eq "yes"){
     print "\n###SCHEDULING VARIANT ANNOTATION####\n";
     my $AVJob = IAP::annotateVariants::runAnnotateVariants(\%opt);
-    
+
     foreach my $sample (@{$opt{SAMPLES}}){
 	push (@{$opt{RUNNING_JOBS}->{$sample}} , $AVJob);
     }
@@ -266,7 +266,7 @@ sub getSamples{
 	    @{$opt{RUNNING_JOBS}->{$sampleName}} = ();
 	}
     }
-    
+
     @{$opt{SAMPLES}} = keys(%samples);
 
     ###
@@ -275,7 +275,7 @@ sub getSamples{
     my %somatic_samples;
     my @somatic_samples_uniq; #usefull for pileup
     my @single_samples;
-    
+
     ### Parse samples
     foreach my $sample (@{$opt{SAMPLES}}){
 	if ($opt{SOMATIC_REGEX}){
@@ -546,7 +546,7 @@ sub checkConfig{
 	}
 	if(! $opt{CALLING_SEXAWARE}){ print "ERROR: No CALLING_SEXAWARE option found in config files.\n"; $checkFailed = 1; }
 	if(! $opt{CALLING_SCALA}){ print "ERROR: No CALLING_SCALA option found in config files.\n"; $checkFailed = 1; }
-	if($opt{CALLING_UGMODE}){ 
+	if($opt{CALLING_UGMODE}){
 	    if($opt{CALLING_UGMODE} ne "SNP" and $opt{CALLING_UGMODE} ne "INDEL" and $opt{CALLING_UGMODE} ne "BOTH"){ print "ERROR: UGMODE: $opt{CALLING_UGMODE} does Not exist use SNP, INDEL or BOTH\n"; $checkFailed = 1; }
 	}
 	if(! $opt{CALLING_STANDCALLCONF}){ print "ERROR: No CALLING_STANDCALLCONF option found in config files.\n"; $checkFailed = 1; }
@@ -696,7 +696,7 @@ sub checkConfig{
 	    if(! $opt{QDNASEQ_QUEUE}){ print "ERROR: No QDNASEQ_QUEUE option found in config files.\n"; $checkFailed = 1; }
 	    if(! $opt{QDNASEQ_THREADS}){ print "ERROR: No QDNASEQ_THREADS option found in config files.\n"; $checkFailed = 1; }
 	    if(! $opt{QDNASEQ_MEM}){ print "ERROR: No QDNASEQ_MEM option found in config files.\n"; $checkFailed = 1; }
-	    if(! $opt{QDNASEQ_TIME}){ print "ERROR: No QDNASEQ_TIME option found in config files.\n"; $checkFailed = 1; }
+	    if(! $opt{QDNASEQ_TIME}){ print "ERROR: No QDNASEQ_TIME option found in config files.\n"; $checkFailed 7= 1; }
 	}
     }
     ## SV_CALLING
@@ -729,6 +729,15 @@ sub checkConfig{
 	    #if(! $opt{DELLY_VCF_GENO}){ print "ERROR: No DELLY_VCF_GENO option found in config files.\n"; $checkFailed = 1; }
 	    if(! $opt{DELLY_GENO_QUAL}){ print "ERROR: No DELLY_GENO_QUA option found in config files.\n"; $checkFailed = 1; }
 	}
+  if(! $opt{SV_GRIDSS}){ print "ERROR: No SV_GRIDSS option found in config files.\n"; $checkFailed = 1; }
+  if($opt{SV_GRIDSS} eq "yes") {
+      if(! $opt{GRIDSS_PATH}){ print "ERROR: No GRIDSS_PATH option found in config files.\n"; $checkFailed = 1; }
+      if(! $opt{GRIDSS_QUEUE}){ print "ERROR: No GRIDSS_QUEUE option found in config files.\n"; $checkFailed = 1; }
+      if(! $opt{GRIDSS_THREADS}){ print "ERROR: No GRIDSS_THREADS option found in config files.\n"; $checkFailed = 1; }
+      if(! $opt{GRIDSS_MEM}){ print "ERROR: No GRIDSS_MEM option found in config files.\n"; $checkFailed = 1; }
+      if(! $opt{GRIDSS_TIME}){ print "ERROR: No GRIDSS_TIME option found in config files.\n"; $checkFailed = 1; }
+
+  }
     }
     ##BAF Analysis
     if($opt{BAF} eq "yes"){
@@ -749,7 +758,7 @@ sub checkConfig{
 	if(! $opt{CALLABLE_LOCI_MAPQUALITY}){ print "ERROR: No CALLABLE_LOCI_MAPQUALITY option found in config files.\n"; $checkFailed = 1; }
 	if(! $opt{CALLABLE_LOCI_DEPTH}){ print "ERROR: No CALLABLE_LOCI_DEPTH option found in config files.\n"; $checkFailed = 1; }
 	if(! $opt{CALLABLE_LOCI_DEPTHLOWMAPQ}){ print "ERROR: No CALLABLE_LOCI_DEPTHLOWMAPQ option found in config files.\n"; $checkFailed = 1; }
-	
+
     }
     ##SNP Panel Analysis
     if($opt{FINGERPRINT} eq "yes"){
@@ -819,10 +828,10 @@ sub checkConfig{
 	## Check and copy ped file needed for phasing and gendercheck
 	## Ped file is copied to output_dir to make sure it is accessible on compute nodes
 	if ( $opt{VCFUTILS_GENDERCHECK} eq "yes" || $opt{VCFUTILS_PHASE} eq "yes" ) {
-	    if(! $opt{PED_PATH}){ 
-		print "ERROR: No PED_PATH found in .conf file\n"; $checkFailed = 1; 
+	    if(! $opt{PED_PATH}){
+		print "ERROR: No PED_PATH found in .conf file\n"; $checkFailed = 1;
 	    } else {
-		if(! -f "$opt{PED_PATH}/$runName.ped") { 
+		if(! -f "$opt{PED_PATH}/$runName.ped") {
 		    print "ERROR: The ped file for this run does not exist: $opt{PED_PATH}/$runName.ped.\n"; $checkFailed = 1;
 		} else {
 		    copy("$opt{PED_PATH}/$runName.ped","$opt{OUTPUT_DIR}/$runName.ped");
@@ -857,7 +866,7 @@ sub checkConfig{
         }
     }
 
-    if ($checkFailed) { 
+    if ($checkFailed) {
 	print "One or more errors found in config files.";
 	die;
     }
