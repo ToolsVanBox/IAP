@@ -44,6 +44,7 @@ sub runGridss {
   ###
   # Run structural variant caller GRIDSS
   ###
+  my @runningJobs;
   my $configuration = shift;
   my %opt = %{$configuration};
   my @gridss_jobs;
@@ -53,7 +54,7 @@ sub runGridss {
 
   my $gridss_out_dir = "$opt{OUTPUT_DIR}/structuralVariants/gridss/";
   my $gridss_log_dir = "$gridss_out_dir/logs/";
-  my $gridds_job_dir = "$gridss_out_dir/jobs/";
+  my $gridss_job_dir = "$gridss_out_dir/jobs/";
   my $gridss_tmp_dir = "$gridss_out_dir/tmp/";
 
   if(! -e $gridss_out_dir){make_path($gridss_out_dir) or die "Couldn't create directory: $gridss_out_dir\n"}
@@ -68,7 +69,7 @@ sub runGridss {
 
   ### Run multisample calling
   foreach my $sample (@single_samples) {
-    my $sampleBam = "$opt{OUTPUT_DIR}/$sample/mapping/$opt{BAM_FILES}->{$sample}"
+    my $sampleBam = "$opt{OUTPUT_DIR}/$sample/mapping/$opt{BAM_FILES}->{$sample}";
     push( @sampleBams, $sampleBam);
     ## Running jobs
     if ( @{$opt{RUNNING_JOBS}->{$sample}} ){
@@ -77,7 +78,7 @@ sub runGridss {
   }
 
   my $vcfFile = "$gridss_out_dir/gridss.vcf";
-  my $assemblyBam = "$gridss_out_dir/gridss.assembly.bam"
+  my $assemblyBam = "$gridss_out_dir/gridss.assembly.bam";
 
   # Setup gridss commands
   my $check_bwa = "if ! which bwa >/dev/null 2>&1; then echo \"Missing bwa. Please add to PATH\" exit 1; fi";
@@ -107,10 +108,20 @@ sub runGridss {
   print GRIDSS_SH "\t\tREFERENCE_SEQUENCE=$opt{GENOME} \\\ \n";
   print GRIDSS_SH "\t\tOUTPUT=$vcfFile \\\ \n";
   print GRIDSS_SH "\t\tASSEMBLY=$assemblyBam \\\ \n";
-  foreach my $sampleBam ($sampleBams) {
+  foreach my $sampleBam (@sampleBams) {
     print GRIDSS_SH "\t\tINPUT=$sampleBam \\\ \n";
   }
   print GRIDSS_SH "EOF\n\n";
+
+  my $qsub = &qsubTemplate(\%opt,"GRIDSS");
+  if (@runningJobs){
+system "$qsub -o $gridss_log_dir/$job_id.out -e $gridss_log_dir/$job_id.err -N $job_id -hold_jid ".join(",",@runningJobs)." $bashFile";
+  } else {
+system "$qsub -o $gridss_log_dir/$job_id.out -e $gridss_log_dir/$job_id.err -N $job_id $bashFile";
+  }
+  push(@gridss_jobs, $job_id);
+
+  return(\@gridss_jobs);
 }
 
 sub runManta {

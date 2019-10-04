@@ -167,7 +167,8 @@ if(! $opt{VCF} ){
 	my $cnv_jobs = IAP::copyNumber::runCopyNumberTools(\%opt);
 	$opt{RUNNING_JOBS}->{'CNV'} = $cnv_jobs;
     }
-    ### SV - Delly/Manta
+    ### SV - Delly/Manta/Gridss
+
     if($opt{SV_CALLING} eq "yes"){
 	print "\n###SCHEDULING SV CALLING####\n";
 	my $sv_jobs = IAP::structuralVariants::runStructuralVariantCallers(\%opt);
@@ -696,7 +697,7 @@ sub checkConfig{
 	    if(! $opt{QDNASEQ_QUEUE}){ print "ERROR: No QDNASEQ_QUEUE option found in config files.\n"; $checkFailed = 1; }
 	    if(! $opt{QDNASEQ_THREADS}){ print "ERROR: No QDNASEQ_THREADS option found in config files.\n"; $checkFailed = 1; }
 	    if(! $opt{QDNASEQ_MEM}){ print "ERROR: No QDNASEQ_MEM option found in config files.\n"; $checkFailed = 1; }
-	    if(! $opt{QDNASEQ_TIME}){ print "ERROR: No QDNASEQ_TIME option found in config files.\n"; $checkFailed 7= 1; }
+	    if(! $opt{QDNASEQ_TIME}){ print "ERROR: No QDNASEQ_TIME option found in config files.\n"; $checkFailed = 1; }
 	}
     }
     ## SV_CALLING
