@@ -96,21 +96,21 @@ sub runGridss {
 
   #print GRIDSS_SH "guixr load-profile $opt{HMFTOOLS_PROFILE} -- << EOF\n";
   print GRIDSS_SH "$check_bwa\n";
-  print GRIDSS_SH "\tjava -ea -Xmx$opt{GRIDSS_MEM}G \\\\n";
-  print GRIDSS_SH "\t\t-Dsamjdk.create_index=true \\\\n";
-  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_read_samtools=true \\\\n";
-  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_write_samtools=true \\\\n";
-  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_write_tribble=true \\\\n";
-  print GRIDSS_SH "\t\t-Dsamjdk.compression_level=1 \\\\n";
-  print GRIDSS_SH "\t\t-Dgridss.gridss.output_to_temp_file=true \\\\n";
-  print GRIDSS_SH "\t\t-cp $opt{GRIDSS_PATH}/gridss.jar gridss.CallVariants \\\\n";
-  print GRIDSS_SH "\t\tTMP_DIR=$gridss_tmp_dir \\\\n";
-  print GRIDSS_SH "\t\tWORKING_DIR=$gridss_out_dir \\\\n";
-  print GRIDSS_SH "\t\tTHREADS=$opt{GRIDSS_THREADS} \\\\n";
-  print GRIDSS_SH "\t\tREFERENCE_SEQUENCE=$opt{GENOME} \\\\n";
-  print GRIDSS_SH "\t\tASSEMBLY=$assemblyBam \\\\n";
+  print GRIDSS_SH "\tjava -ea -Xmx$opt{GRIDSS_MEM}G \\\n";
+  print GRIDSS_SH "\t\t-Dsamjdk.create_index=true \\\n";
+  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_read_samtools=true \\\n";
+  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_write_samtools=true \\\n";
+  print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_write_tribble=true \\\n";
+  print GRIDSS_SH "\t\t-Dsamjdk.compression_level=1 \\\n";
+  print GRIDSS_SH "\t\t-Dgridss.gridss.output_to_temp_file=true \\\n";
+  print GRIDSS_SH "\t\t-cp $opt{GRIDSS_PATH}/gridss.jar gridss.CallVariants \\\n";
+  print GRIDSS_SH "\t\tTMP_DIR=$gridss_tmp_dir \\\n";
+  print GRIDSS_SH "\t\tWORKING_DIR=$gridss_out_dir \\\n";
+  print GRIDSS_SH "\t\tTHREADS=$opt{GRIDSS_THREADS} \\\n";
+  print GRIDSS_SH "\t\tREFERENCE_SEQUENCE=$opt{GENOME} \\\n";
+  print GRIDSS_SH "\t\tASSEMBLY=$assemblyBam \\\n";
   foreach my $sampleBam (@sampleBams) {
-    print GRIDSS_SH "\t\tINPUT=$sampleBam \\\\n";
+    print GRIDSS_SH "\t\tINPUT=$sampleBam \\\n";
   }
   print GRIDSS_SH "\t\tOUTPUT=$vcfFile\n";
 
