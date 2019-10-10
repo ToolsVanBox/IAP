@@ -92,11 +92,11 @@ sub runGridss {
   print GRIDSS_SH "bash $opt{CLUSTER_PATH}/settings.sh\n\n";
   print GRIDSS_SH "cd $opt{OUTPUT_DIR}\n\n";
 
-  print GRIDSS_SH "export PATH=\$PATH:$opt{GRIDSS_PATH}\n\n";
+  print GRIDSS_SH "export PATH=\$PATH:$opt{BWA_PATH}\n\n";
 
   #print GRIDSS_SH "guixr load-profile $opt{HMFTOOLS_PROFILE} -- << EOF\n";
   print GRIDSS_SH "$check_bwa\n";
-  print GRIDSS_SH "\tjava -ea -Xmx$opt{GRIDSS_MEM}G \\\n";
+  print GRIDSS_SH "\tjava -ea -Xmx".int($opt{GRIDSS_MEM}/2)."G \\\n";
   print GRIDSS_SH "\t\t-Dsamjdk.create_index=true \\\n";
   print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_read_samtools=true \\\n";
   print GRIDSS_SH "\t\t-Dsamjdk.use_async_io_write_samtools=true \\\n";
@@ -114,7 +114,7 @@ sub runGridss {
   }
   print GRIDSS_SH "\t\tOUTPUT=$vcfFile\n";
 
-  print GRIDSS_SH "EOF\n\n";
+  #print GRIDSS_SH "EOF\n\n";
 
   my $qsub = &qsubTemplate(\%opt,"GRIDSS");
   if (@runningJobs){
