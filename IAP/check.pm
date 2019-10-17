@@ -16,7 +16,7 @@ use lib "$FindBin::Bin"; #locates pipeline directory
 use IAP::sge;
 
 sub runCheck {
-    ### 
+    ###
     # Run checks and email result
     ###
     my $configuration = shift;
@@ -41,7 +41,7 @@ sub runCheck {
     my $version = `git --git-dir $FindBin::Bin/.git describe --tags`;
     print BASH "echo \"Pipeline version: $version \" >>$logFile\n\n";
     print BASH "echo \"\">>$logFile\n\n"; ## empty line between samples
-    
+
     ### Check fastq steps
     if( $opt{FASTQ} ){
 	foreach my $fastq_file (keys %{$opt{FASTQ}}){
@@ -133,7 +133,7 @@ sub runCheck {
 		    push( @runningJobs, $opt{RUNNING_JOBS}->{'fingerprint'} );
 		}
 	    }
-	    
+
 	    print BASH "echo \"\">>$logFile\n\n"; ## empty line between samples
 	}
 	## Running jobs
@@ -230,11 +230,21 @@ sub runCheck {
     }
     if($opt{SV_CALLING} eq "yes" && ! $opt{VCF}){
 	print BASH "echo \"SV calling:\" >>$logFile\n";
-	if($opt{SV_DELLY} eq "yes"){
+  if($opt{SV_GRIDSS} eq "yes"){
+	    # per sv type done file check
+	  my $done_file = "$opt{OUTPUT_DIR}/structuralVariants/gridss/logs/GRIDSS.done";
+		print BASH "if [ -f $done_file ]; then\n";
+		print BASH "\techo \"\t GRIDSS: done \" >>$logFile\n";
+		print BASH "else\n";
+		print BASH "\techo \"\t GRIDSS: failed \">>$logFile\n";
+		print BASH "\tfailed=true\n";
+		print BASH "fi\n";
+  }
+  if($opt{SV_DELLY} eq "yes"){
 	    # per sv type done file check
 	    my @svTypes = split/\t/, $opt{DELLY_SVTYPE};
 	    foreach my $type (@svTypes){
-		my $done_file = "$opt{OUTPUT_DIR}/structuralVariants/delly/logs/DELLY_$type.done"; 
+		my $done_file = "$opt{OUTPUT_DIR}/structuralVariants/delly/logs/DELLY_$type.done";
 		print BASH "if [ -f $done_file ]; then\n";
 		print BASH "\techo \"\t Delly $type: done \" >>$logFile\n";
 		print BASH "else\n";
@@ -335,22 +345,22 @@ sub runCheck {
 	    }
 	}
     }
-    
+
     print BASH "\n\tcd $opt{OUTPUT_DIR}\n";
-    
+
     # Run cleanup script if set to yes
     if($opt{CHECKING_CLEANUP} eq "yes"){
 	print BASH "\tpython $opt{CHECKING_CLEANUP_SCRIPT} > logs/checking_cleanup.log 2> logs/checking_cleanup.log \n";
     }
-    
+
     # Send email.
     print BASH "\tmail -s \"IAP DONE $runName\" \"$opt{MAIL}\" < $logFile\n";
-    
+
     # Create md5sum.txt
     print BASH "\tfind . -type f \\( ! -iname \"md5sum.txt\" \\) -exec md5sum \"{}\" \\; > md5sum.txt\n";
 
     print BASH "fi\n";
-    
+
     #Sleep to ensure that email is send from cluster.
     print BASH "sleep 5s \n";
 

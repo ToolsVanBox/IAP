@@ -62,8 +62,8 @@ sub runGridss {
   if(! -e $gridss_job_dir){make_path($gridss_job_dir) or die "Couldn't create directory: $gridss_job_dir\n"}
   if(! -e $gridss_tmp_dir){make_path($gridss_tmp_dir) or die "Couldn't create directory: $gridss_tmp_dir\n"}
 
-  if (-e "$opt{OUTPUT_DIR}/logs/SV_GRIDSS.done"){
-    print "WARNING: $opt{OUTPUT_DIR}/logs/SV_GRIDSS.done exists, skipping \n";
+  if (-e "$gridss_log_dir/GRIDSS.done"){
+    print "WARNING: $gridss_log_dir/GRIDSS.done exists, skipping \n";
     return \%opt;
   }
 
@@ -113,6 +113,11 @@ sub runGridss {
     print GRIDSS_SH "\t\tINPUT=$sampleBam \\\n";
   }
   print GRIDSS_SH "\t\tOUTPUT=$vcfFile\n";
+
+  print GRIDSS_SH "if [ -s $gridss_out_dir/$vcfFile ]\n";
+  print GRIDSS_SH "then\n";
+  print GRIDSS_SH "\ttouch $gridss_log_dir/GRIDSS.done\n";
+  print GRIDSS_SH "fi\n";
 
   #print GRIDSS_SH "EOF\n\n";
 
