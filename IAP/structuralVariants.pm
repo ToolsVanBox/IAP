@@ -114,7 +114,7 @@ sub runGridss {
   }
   print GRIDSS_SH "\t\tOUTPUT=$vcfFile\n";
 
-  print GRIDSS_SH "if [ -s $gridss_out_dir/$vcfFile ]\n";
+  print GRIDSS_SH "if [ -s $vcfFile ]\n";
   print GRIDSS_SH "then\n";
   print GRIDSS_SH "\ttouch $gridss_log_dir/GRIDSS.done\n";
   print GRIDSS_SH "fi\n";
