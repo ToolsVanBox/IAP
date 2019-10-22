@@ -64,7 +64,7 @@ sub runGridss {
 
   if (-e "$gridss_log_dir/GRIDSS.done"){
     print "WARNING: $gridss_log_dir/GRIDSS.done exists, skipping \n";
-    return \%opt;
+    return(\@gridss_jobs);
   }
 
   ### Run multisample calling
