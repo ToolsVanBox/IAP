@@ -105,6 +105,7 @@ sub runGridss {
   print GRIDSS_SH "\t\t-Dgridss.gridss.output_to_temp_file=true \\\n";
   print GRIDSS_SH "\t\t-cp $opt{GRIDSS_PATH}/gridss.jar gridss.CallVariants \\\n";
   print GRIDSS_SH "\t\tTMP_DIR=$gridss_tmp_dir \\\n";
+  print GRIDSS_SH "\t\tVALIDATION_STRINGENCY=LENIENT \\\n";
   print GRIDSS_SH "\t\tWORKING_DIR=$gridss_out_dir \\\n";
   print GRIDSS_SH "\t\tTHREADS=$opt{GRIDSS_THREADS} \\\n";
   print GRIDSS_SH "\t\tREFERENCE_SEQUENCE=$opt{GENOME} \\\n";
