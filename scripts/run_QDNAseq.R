@@ -21,7 +21,7 @@ data("b5.cl80")
 bins <- b5.cl80
 
 #Open bam files and get read counts
-readCounts <- binReadCounts(bins, bams, cache=F)
+readCounts <- binReadCounts(bins, bams, cache=F, chunkSize=100000000)
 
 # Filter optimisation
 if (!file.exists("readCountsFiltered.rds")) {
