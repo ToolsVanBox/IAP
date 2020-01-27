@@ -9,9 +9,9 @@ outdir <- args[6]
 print(outdir)
 baffile <- args[7]
 print(baffile)
-sample <- unlist(strsplit(baffile,"/"))
+sample <- gsub(".*/", "", baffile)
 print(sample)
-sample <- unlist(strsplit(sample[length(sample)],"_"))[1]
+sample <- gsub("_BAF.txt", "", sample)
 print(sample)
 
 f2 <- function(x) sum(unlist(x)[2:length(x)])
