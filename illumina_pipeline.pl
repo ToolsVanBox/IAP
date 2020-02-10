@@ -36,6 +36,7 @@ use IAP::annotateVariants;
 use IAP::vcfutils;
 use IAP::nipt;
 use IAP::check;
+use IAP::telomerecat;
 
 ### Check correct usage
 die usage() if @ARGV == 0;
@@ -153,6 +154,13 @@ if(! $opt{VCF} ){
 	print "\n###SCHEDULING NIPT###\n";
 	my $niptJob = IAP::nipt::runNipt(\%opt);
 	$opt{RUNNING_JOBS}->{'nipt'} = $niptJob;
+    }
+
+    if($opt{TELOMERECAT} eq "yes"){
+    print "\n###SCHEDULING TELOMERECAT###\n";
+    	my $telomerecatJob = IAP::telomerecat::runTelomerecat(\%opt);
+    	$opt{RUNNING_JOBS}->{'telomerecat'} = $telomerecatJob;
+
     }
 
 ### Variant Caller
@@ -418,6 +426,7 @@ sub checkConfig{
     if(! $opt{FILTER_VARIANTS}){ print "ERROR: No FILTER_VARIANTS option found in config files. \n"; $checkFailed = 1; }
     if(! $opt{SOMATIC_VARIANTS}){ print "ERROR: No SOMATIC_VARIANTS option found in config files. \n"; $checkFailed = 1; }
     if(! $opt{COPY_NUMBER}){ print "ERROR: No COPY_NUMBER option found in config files. \n"; $checkFailed = 1; }
+    if(! $opt{TELOMERECAT}){ print "ERROR: No TELOMERECAT option found in config files. \n"; $checkFailed = 1; }
     if(! $opt{SV_CALLING}){ print "ERROR: No SV_CALLING option found in config files. \n"; $checkFailed = 1; }
     if(! $opt{BAF}){ print "ERROR: No BAF option found in config files. \n"; $checkFailed = 1; }
     if(! $opt{FINGERPRINT}){ print "ERROR: No FINGERPRINT option found in config files. \n"; $checkFailed = 1; }
@@ -699,6 +708,14 @@ sub checkConfig{
 	    if(! $opt{QDNASEQ_MEM}){ print "ERROR: No QDNASEQ_MEM option found in config files.\n"; $checkFailed = 1; }
 	    if(! $opt{QDNASEQ_TIME}){ print "ERROR: No QDNASEQ_TIME option found in config files.\n"; $checkFailed = 1; }
 	}
+    }
+    ## Telomere
+    if($opt{TELOMERECAT} eq "yes"){
+      if(! $opt{TELOMERECAT_PATH}){ print "ERROR: No TELOMERECAT_PATH option found in config files.\n"; $checkFailed = 1; }
+	    if(! $opt{TELOMERECAT_QUEUE}){ print "ERROR: No TELOMERECAT_QUEUE option found in config files.\n"; $checkFailed = 1; }
+	    if(! $opt{TELOMERECAT_THREADS}){ print "ERROR: No TELOMERECAT_THREADS option found in config files.\n"; $checkFailed = 1; }
+	    if(! $opt{TELOMERECAT_MEM}){ print "ERROR: No TELOMERECAT_MEM option found in config files.\n"; $checkFailed = 1; }
+	    if(! $opt{TELOMERECAT_TIME}){ print "ERROR: No TELOMERECAT_TIME option found in config files.\n"; $checkFailed = 1; }
     }
     ## SV_CALLING
     if($opt{SV_CALLING} eq "yes"){

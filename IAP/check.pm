@@ -109,6 +109,18 @@ sub runCheck {
 		    push( @runningJobs, @{$opt{RUNNING_JOBS}->{'baf'}} );
 		}
 	    }
+      if($opt{TELOMERECAT} eq "yes"){
+    $doneFile = $opt{OUTPUT_DIR}."/$sample/logs/TELOMERECAT_$sample.done";
+    print BASH "if [ -f $doneFile ]; then\n";
+    print BASH "\techo \"\t TELOMERECAT analysis: done \" >>$logFile\n";
+    print BASH "else\n";
+    print BASH "\techo \"\t TELOMERECAT analysis: failed \">>$logFile\n";
+    print BASH "\tfailed=true\n";
+    print BASH "fi\n";
+    if ( $opt{RUNNING_JOBS}->{'telomerecat'} ){
+        push( @runningJobs, @{$opt{RUNNING_JOBS}->{'telomerecat'}} );
+    }
+      }
 	    if($opt{CALLABLE_LOCI} eq "yes"){
 		$doneFile = $opt{OUTPUT_DIR}."/$sample/logs/CallableLoci_$sample.done";
 		print BASH "if [ -f $doneFile ]; then\n";
